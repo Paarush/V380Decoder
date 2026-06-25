@@ -393,13 +393,31 @@ namespace V380Decoder.src
                                 DecryptVideoFrame(payload, payload.Length);
                         }
 
-                        // validate H.264 start code
-                        if (payload.Length < 4 ||
-                            payload[0] != 0 || payload[1] != 0 ||
-                            payload[2] != 0 || payload[3] != 1)
+                        // Search for H.264 Annex-B start code within first 16 bytes
+                        int scPos = -1;
+                        int searchEnd = Math.Min(16, payload.Length - 3);
+                        for (int i = 0; i < searchEnd; i++)
+                        {
+                            if (payload[i] == 0 && payload[i + 1] == 0 && payload[i + 2] == 1)
+                            {
+                                scPos = i;
+                                if (i > 0 && payload[i - 1] == 0)
+                                    scPos = i - 1;
+                                break;
+                            }
+                        }
+
+                        if (scPos < 0)
                         {
                             Console.Error.WriteLine($"[VIDEO] bad start code, len={payload.Length}");
                             continue;
+                        }
+
+                        if (scPos > 0)
+                        {
+                            byte[] trimmed = new byte[payload.Length - scPos];
+                            Array.Copy(payload, scPos, trimmed, 0, trimmed.Length);
+                            payload = trimmed;
                         }
 
                         snapshotManager.UpdateFrame(payload, frameWidth, frameheight, isIFrame: type == 0x00);
