@@ -402,9 +402,9 @@ namespace V380Decoder.src
                     <tt:Name>PTZ</tt:Name>
                     <tt:UseCount>1</tt:UseCount>
                     <tt:NodeToken>PTZNode_1</tt:NodeToken>
-                    <tt:DefaultContinuousPanTiltVelocitySpace>http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace</tt:DefaultContinuousPanTiltVelocitySpace>
-                    <tt:DefaultRelativePanTiltTranslationSpace>http://www.onvif.org/ver10/tptz/PanTiltSpaces/TranslationGenericSpace</tt:DefaultRelativePanTiltTranslationSpace>
                     <tt:DefaultAbsolutePantTiltPositionSpace>http://www.onvif.org/ver10/tptz/PanTiltSpaces/PositionGenericSpace</tt:DefaultAbsolutePantTiltPositionSpace>
+                    <tt:DefaultRelativePanTiltTranslationSpace>http://www.onvif.org/ver10/tptz/PanTiltSpaces/TranslationGenericSpace</tt:DefaultRelativePanTiltTranslationSpace>
+                    <tt:DefaultContinuousPanTiltVelocitySpace>http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace</tt:DefaultContinuousPanTiltVelocitySpace>
                     <tt:DefaultPTZTimeout>PT1S</tt:DefaultPTZTimeout>
                     <tt:PanTiltLimits>
                       <tt:Range>
@@ -469,9 +469,9 @@ namespace V380Decoder.src
                     <tt:Name>PTZ</tt:Name>
                     <tt:UseCount>1</tt:UseCount>
                     <tt:NodeToken>PTZNode_1</tt:NodeToken>
-                    <tt:DefaultContinuousPanTiltVelocitySpace>
-                      http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace
-                    </tt:DefaultContinuousPanTiltVelocitySpace>
+                    <tt:DefaultAbsolutePantTiltPositionSpace>http://www.onvif.org/ver10/tptz/PanTiltSpaces/PositionGenericSpace</tt:DefaultAbsolutePantTiltPositionSpace>
+                    <tt:DefaultRelativePanTiltTranslationSpace>http://www.onvif.org/ver10/tptz/PanTiltSpaces/TranslationGenericSpace</tt:DefaultRelativePanTiltTranslationSpace>
+                    <tt:DefaultContinuousPanTiltVelocitySpace>http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace</tt:DefaultContinuousPanTiltVelocitySpace>
                     <tt:DefaultPTZTimeout>PT1S</tt:DefaultPTZTimeout>
                     <tt:PanTiltLimits>
                       <tt:Range>
@@ -528,21 +528,21 @@ namespace V380Decoder.src
                 <tptz:PTZNode token=""PTZNode_1"" FixedHomePosition=""false"">
                   <tt:Name>V380 PTZ</tt:Name>
                   <tt:SupportedPTZSpaces>
-                    <tt:ContinuousPanTiltVelocitySpace>
-                      <tt:URI>http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace</tt:URI>
-                      <tt:XRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:XRange>
-                      <tt:YRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:YRange>
-                    </tt:ContinuousPanTiltVelocitySpace>
-                    <tt:RelativePanTiltTranslationSpace>
-                      <tt:URI>http://www.onvif.org/ver10/tptz/PanTiltSpaces/TranslationGenericSpace</tt:URI>
-                      <tt:XRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:XRange>
-                      <tt:YRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:YRange>
-                    </tt:RelativePanTiltTranslationSpace>
                     <tt:AbsolutePanTiltPositionSpace>
                       <tt:URI>http://www.onvif.org/ver10/tptz/PanTiltSpaces/PositionGenericSpace</tt:URI>
                       <tt:XRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:XRange>
                       <tt:YRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:YRange>
                     </tt:AbsolutePanTiltPositionSpace>
+                    <tt:RelativePanTiltTranslationSpace>
+                      <tt:URI>http://www.onvif.org/ver10/tptz/PanTiltSpaces/TranslationGenericSpace</tt:URI>
+                      <tt:XRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:XRange>
+                      <tt:YRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:YRange>
+                    </tt:RelativePanTiltTranslationSpace>
+                    <tt:ContinuousPanTiltVelocitySpace>
+                      <tt:URI>http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace</tt:URI>
+                      <tt:XRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:XRange>
+                      <tt:YRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:YRange>
+                    </tt:ContinuousPanTiltVelocitySpace>
                   </tt:SupportedPTZSpaces>
                   <tt:MaximumNumberOfPresets>0</tt:MaximumNumberOfPresets>
                   <tt:HomeSupported>false</tt:HomeSupported>
