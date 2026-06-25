@@ -53,8 +53,8 @@ namespace V380Decoder.src
       else if (Contains(action, body, "GetConfiguration")) return RespGetConfigurations();
       else if (Contains(action, body, "GetStatus")) return RespGetStatus();
       else if (Contains(action, body, "ContinuousMove")) return HandleContinuousMove(body, camera);
-      else if (Contains(action, body, "AbsoluteMove")) return SoapOk("AbsoluteMove");
-      else if (Contains(action, body, "RelativeMove")) return SoapOk("RelativeMove");
+      else if (Contains(action, body, "AbsoluteMove")) return HandleAbsoluteMove(body, camera);
+      else if (Contains(action, body, "RelativeMove")) return HandleRelativeMove(body, camera);
       else if (Contains(action, body, "GotoHomePosition")) return SoapOk("GotoHomePosition");
       else if (Contains(action, body, "SetPreset")) return SoapOk("SetPreset");
       else if (Contains(action, body, "RemovePreset")) return SoapOk("RemovePreset");
@@ -148,6 +148,15 @@ namespace V380Decoder.src
       return null;
     }
 
+    private static void ApplyPtz(float x, float y, V380Client camera)
+    {
+      if (x > 0.1f) camera.PtzRight();
+      else if (x < -0.1f) camera.PtzLeft();
+
+      if (y > 0.1f) camera.PtzUp();
+      else if (y < -0.1f) camera.PtzDown();
+    }
+
     private static string HandleContinuousMove(string body, V380Client camera)
     {
       float x = ParseFloat(body, "x");
@@ -158,16 +167,44 @@ namespace V380Decoder.src
       lock (ptzLock)
       {
         ptzStopTimer?.Dispose();
-
-        if (x > 0.1f) { camera.PtzRight(); LogUtils.debug("[ONVIF] PTZ → RIGHT"); }
-        else if (x < -0.1f) { camera.PtzLeft(); LogUtils.debug("[ONVIF] PTZ → LEFT"); }
-        else if (y > 0.1f) { camera.PtzUp(); LogUtils.debug("[ONVIF] PTZ → UP"); }
-        else if (y < -0.1f) { camera.PtzDown(); LogUtils.debug("[ONVIF] PTZ → DOWN"); }
-
+        ApplyPtz(x, y, camera);
         ptzStopTimer = new Timer(_ => camera.PtzStop(), null, durationMs, Timeout.Infinite);
       }
 
       return SoapOk("ContinuousMove");
+    }
+
+    private static string HandleRelativeMove(string body, V380Client camera)
+    {
+      float x = ParseFloat(body, "x");
+      float y = ParseFloat(body, "y");
+      const int DURATION_MS = 500;
+
+      lock (ptzLock)
+      {
+        ptzStopTimer?.Dispose();
+        ApplyPtz(x, y, camera);
+        ptzStopTimer = new Timer(_ => camera.PtzStop(), null, DURATION_MS, Timeout.Infinite);
+      }
+
+      return SoapOk("RelativeMove");
+    }
+
+    private static string HandleAbsoluteMove(string body, V380Client camera)
+    {
+      float x = ParseFloat(body, "x");
+      float y = ParseFloat(body, "y");
+      const int DURATION_MS = 500;
+
+      // Absolute position: move towards the target position for a short burst
+      lock (ptzLock)
+      {
+        ptzStopTimer?.Dispose();
+        ApplyPtz(x, y, camera);
+        ptzStopTimer = new Timer(_ => camera.PtzStop(), null, DURATION_MS, Timeout.Infinite);
+      }
+
+      return SoapOk("AbsoluteMove");
     }
 
     private static string HandleStop(V380Client camera)
@@ -243,7 +280,7 @@ namespace V380Decoder.src
                   <tds:Version><tt:Major>2</tt:Major><tt:Minor>60</tt:Minor></tds:Version>
                 </tds:Service>
                 <tds:Service>
-                  <tds:Namespace>http://www.onvif.org/ver10/ptz/wsdl</tds:Namespace>
+                  <tds:Namespace>http://www.onvif.org/ver20/ptz/wsdl</tds:Namespace>
                   <tds:XAddr>http://{host}/onvif/ptz_service</tds:XAddr>
                   <tds:Version><tt:Major>2</tt:Major><tt:Minor>60</tt:Minor></tds:Version>
                 </tds:Service>
@@ -368,6 +405,14 @@ namespace V380Decoder.src
                     <tt:DefaultContinuousPanTiltVelocitySpace>http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace</tt:DefaultContinuousPanTiltVelocitySpace>
                     <tt:DefaultRelativePanTiltTranslationSpace>http://www.onvif.org/ver10/tptz/PanTiltSpaces/TranslationGenericSpace</tt:DefaultRelativePanTiltTranslationSpace>
                     <tt:DefaultAbsolutePantTiltPositionSpace>http://www.onvif.org/ver10/tptz/PanTiltSpaces/PositionGenericSpace</tt:DefaultAbsolutePantTiltPositionSpace>
+                    <tt:DefaultPTZTimeout>PT1S</tt:DefaultPTZTimeout>
+                    <tt:PanTiltLimits>
+                      <tt:Range>
+                        <tt:URI>http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace</tt:URI>
+                        <tt:XRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:XRange>
+                        <tt:YRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:YRange>
+                      </tt:Range>
+                    </tt:PanTiltLimits>
                   </tt:PTZConfiguration>
                 </trt:Profiles>
               </trt:GetProfilesResponse>");
@@ -488,6 +533,16 @@ namespace V380Decoder.src
                       <tt:XRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:XRange>
                       <tt:YRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:YRange>
                     </tt:ContinuousPanTiltVelocitySpace>
+                    <tt:RelativePanTiltTranslationSpace>
+                      <tt:URI>http://www.onvif.org/ver10/tptz/PanTiltSpaces/TranslationGenericSpace</tt:URI>
+                      <tt:XRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:XRange>
+                      <tt:YRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:YRange>
+                    </tt:RelativePanTiltTranslationSpace>
+                    <tt:AbsolutePanTiltPositionSpace>
+                      <tt:URI>http://www.onvif.org/ver10/tptz/PanTiltSpaces/PositionGenericSpace</tt:URI>
+                      <tt:XRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:XRange>
+                      <tt:YRange><tt:Min>-1</tt:Min><tt:Max>1</tt:Max></tt:YRange>
+                    </tt:AbsolutePanTiltPositionSpace>
                   </tt:SupportedPTZSpaces>
                   <tt:MaximumNumberOfPresets>0</tt:MaximumNumberOfPresets>
                   <tt:HomeSupported>false</tt:HomeSupported>
