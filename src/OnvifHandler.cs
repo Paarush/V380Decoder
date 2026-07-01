@@ -651,7 +651,15 @@ namespace V380Decoder.src
     private static string RespGetNetworkInterfaces(V380Client camera)
     {
       DeviceInfo info = camera.GetDeviceInfo();
-      string mac = info?.Mac ?? "00:00:00:00:00:00";
+      string mac = info?.Mac;
+      // If discovery didn't find a MAC, generate a unique one from the camera ID
+      if (string.IsNullOrEmpty(mac) || mac == "00:00:00:00:00:00")
+      {
+        if (uint.TryParse(camera.GetDeviceId(), out uint devId))
+          mac = $"02:00:00:{(devId >> 16) & 0xFF:X2}:{(devId >> 8) & 0xFF:X2}:{devId & 0xFF:X2}";
+        else
+          mac = "02:00:00:00:00:01";
+      }
       string ip = info?.Ip ?? "0.0.0.0";
       int prefix = info?.Subnet != null ? NetworkHelper.SubnetToPrefixLength(info.Subnet) : 24;
       return Envelope($@"
