@@ -651,21 +651,24 @@ namespace V380Decoder.src
     private static string RespGetNetworkInterfaces(V380Client camera)
     {
       DeviceInfo info = camera.GetDeviceInfo();
+      string mac = info?.Mac ?? "00:00:00:00:00:00";
+      string ip = info?.Ip ?? "0.0.0.0";
+      int prefix = info?.Subnet != null ? NetworkHelper.SubnetToPrefixLength(info.Subnet) : 24;
       return Envelope($@"
               <tds:GetNetworkInterfacesResponse>
                 <tds:NetworkInterfaces token=""eth0"">
                   <tt:Enabled>true</tt:Enabled>
                   <tt:Info>
                     <tt:Name>eth0</tt:Name>
-                    <tt:HwAddress>{info.Mac}</tt:HwAddress>
+                    <tt:HwAddress>{mac}</tt:HwAddress>
                     <tt:MTU>1500</tt:MTU>
                   </tt:Info>
                   <tt:IPv4>
                     <tt:Enabled>true</tt:Enabled>
                     <tt:Config>
                       <tt:Manual>
-                        <tt:Address>{info.Ip}</tt:Address>
-                        <tt:PrefixLength>{NetworkHelper.SubnetToPrefixLength(info.Subnet)}</tt:PrefixLength>
+                        <tt:Address>{ip}</tt:Address>
+                        <tt:PrefixLength>{prefix}</tt:PrefixLength>
                       </tt:Manual>
                       <tt:DHCP>false</tt:DHCP>
                     </tt:Config>
@@ -880,7 +883,7 @@ namespace V380Decoder.src
     private static string RespGetNetworkDefaultGateway(V380Client camera) => Envelope($@"
             <tds:GetNetworkDefaultGatewayResponse>
               <tds:NetworkGateway>
-              <tt:IPv4Address>{camera.GetDeviceInfo().Gateway}</tt:IPv4Address>
+              <tt:IPv4Address>{camera.GetDeviceInfo()?.Gateway ?? "192.168.1.1"}</tt:IPv4Address>
               </tds:NetworkGateway>
             </tds:GetNetworkDefaultGatewayResponse>");
 

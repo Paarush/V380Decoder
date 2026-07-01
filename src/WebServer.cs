@@ -220,8 +220,21 @@ namespace V380Decoder.src
             if (action.StartsWith("wsdl", StringComparison.OrdinalIgnoreCase) && action.Length > 4)
                 action = action.Substring(4);
 
-
-            string resp = OnvifHandler.Handle(action, body, ctx, client, httpPort, rtspPort, secure, username, password);
+            string resp;
+            try
+            {
+                resp = OnvifHandler.Handle(action, body, ctx, client, httpPort, rtspPort, secure, username, password);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[ONVIF] Error handling {action}: {ex.Message}");
+                Console.Error.WriteLine($"[ONVIF] Stack trace: {ex.StackTrace}");
+                resp = $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                       $"<s:Envelope xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\">" +
+                       $"<s:Body><s:Fault><s:Code><s:Value>s:Receiver</s:Value></s:Code>" +
+                       $"<s:Reason><s:Text xml:lang=\"en\">{System.Security.SecurityElement.Escape(ex.Message)}</s:Text></s:Reason>" +
+                       $"</s:Fault></s:Body></s:Envelope>";
+            }
 
             LogUtils.debug($"[ONVIF] response: {(resp.Length > 300 ? resp[..300] + "..." : resp)}");
 
