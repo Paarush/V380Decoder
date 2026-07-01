@@ -33,6 +33,7 @@ if (args.Length > 0)
     int httpPort = ArgParser.GetArg(args, "--http-port", 8080);
     bool secure = ArgParser.GetArg(args, "--secure", false);
     bool debug = ArgParser.GetArg(args, "--debug", false);
+    string localIp = ArgParser.GetArg(args, "--local-ip", NetworkHelper.GetLocalIPAddress());
 
     if (source.Equals("lan", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(ip))
     {
@@ -99,7 +100,8 @@ if (args.Length > 0)
             rtspPort,
             secure,
             username,
-            password);
+            password,
+            localIp);
         rtsp.Start();
 
         webServer = new(
@@ -111,7 +113,8 @@ if (args.Length > 0)
             enableMjpeg,
             secure,
             username,
-            password);
+            password,
+            localIp);
         webServer.Start();
     }
 
@@ -212,6 +215,10 @@ SERVER OPTIONS:
 
   --enable-mjpeg         Enable MJPEG stream for access through browser.
 
+  --local-ip <address>   Local IP address for RTSP/HTTP/ONVIF services
+                          Example: --local-ip 192.168.1.10
+                          (default: auto-detected)
+  
   --secure               Enable authentication for ONVIF, RTSP, and API.
                          Uses the same username and password as the V380 camera.                       
 

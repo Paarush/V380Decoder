@@ -10,24 +10,26 @@ namespace V380Decoder.src
         private readonly bool secure;
         private readonly string username;
         private readonly string password;
+        private readonly string localIp;
         private TcpListener listener;
         private Thread acceptThread;
         private volatile bool running;
 
-        // concurrent set of active sessions
+	// concurrent set of active sessions
         private readonly ConcurrentDictionary<int, RtspSession> sessions = new();
         private int nextId;
 
-        // SPS/PPS from first keyframe – used for SDP fmtp line
+	// SPS/PPS from first keyframe – used for SDP fmtp line
         private byte[] cachedSps, cachedPps;
         private readonly object sdpLock = new();
 
-        public RtspServer(int port, bool secure, string username, string password)
+        public RtspServer(int port, bool secure, string username, string password, string localIp = null)
         {
             this.port = port;
             this.username = username;
             this.password = password;
             this.secure = secure;
+            this.localIp = localIp ?? NetworkHelper.GetLocalIPAddress();
         }
 
         public bool IsSecure => secure;
@@ -42,7 +44,7 @@ namespace V380Decoder.src
             running = true;
             acceptThread = new Thread(AcceptLoop) { IsBackground = true, Name = "rtsp-accept" };
             acceptThread.Start();
-            Console.Error.WriteLine($"[RTSP] rtsp://{basicAuth}{NetworkHelper.GetLocalIPAddress()}:{port}/live");
+            Console.Error.WriteLine($"[RTSP] rtsp://{basicAuth}{localIp}:{port}/live");
         }
 
         void AcceptLoop()

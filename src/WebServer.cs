@@ -20,6 +20,7 @@ namespace V380Decoder.src
         private readonly bool secure;
         private readonly string username;
         private readonly string password;
+        private readonly string localIp;
         private WebApplication app;
         public WebServer(
             int httpPort,
@@ -30,7 +31,8 @@ namespace V380Decoder.src
             bool enableMjpeg,
             bool secure,
             string username,
-            string password)
+            string password,
+            string localIp = null)
         {
             this.httpPort = httpPort;
             this.rtspPort = rtspPort;
@@ -41,11 +43,12 @@ namespace V380Decoder.src
             this.secure = secure;
             this.username = username;
             this.password = password;
+            this.localIp = localIp ?? NetworkHelper.GetLocalIPAddress();
         }
 
         public void Start()
         {
-            string ipAddress = NetworkHelper.GetLocalIPAddress();
+            string ipAddress = localIp;
             string basicAuth = string.Empty;
             var builder = WebApplication.CreateBuilder();
             builder.WebHost.UseUrls($"http://*:{httpPort}");
