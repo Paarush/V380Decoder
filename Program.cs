@@ -1,4 +1,5 @@
 ﻿using V380Decoder.src;
+using System.Runtime.InteropServices;
 
 if (args.Length > 0)
 {
@@ -132,6 +133,13 @@ if (args.Length > 0)
          e.Cancel = true;
          cts.Cancel();
      };
+
+    // Handle SIGTERM from systemd
+    PosixSignalRegistration.Create(PosixSignal.SIGTERM, ctx =>
+    {
+        ctx.Cancel = true;
+        cts.Cancel();
+    });
 
     AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
     {

@@ -341,7 +341,7 @@ namespace V380Decoder.src
                     }
 
                     // 12-byte fragment header
-                    if (ReadExact(streamStream, header12, 0, 12) < 12) continue;
+                    if (ReadExact(streamStream, header12, 0, 12, ct) < 12) continue;
 
                     if (header12[0] != 0x7F)
                     {
@@ -360,7 +360,7 @@ namespace V380Decoder.src
                     }
 
                     if (payloadBuf.Length < payLen) payloadBuf = new byte[payLen];
-                    if (ReadExact(streamStream, payloadBuf, 0, payLen) < payLen) continue;
+                    if (ReadExact(streamStream, payloadBuf, 0, payLen, ct) < payLen) continue;
 
                     // VIDEO  0x00=I-frame  0x01=P-frame
                     if (type == 0x00 || type == 0x01)
@@ -621,12 +621,13 @@ namespace V380Decoder.src
             var r = new byte[tot]; Array.Copy(buf, r, tot); return r;
         }
 
-        int ReadExact(NetworkStream s, byte[] buf, int off, int cnt)
+        int ReadExact(NetworkStream s, byte[] buf, int off, int cnt, CancellationToken ct)
         {
             int tot = 0;
             var deadline = DateTime.Now.AddSeconds(3);
             while (tot < cnt)
             {
+                if (ct.IsCancellationRequested) return -1;
                 if (DateTime.Now > deadline)
                 {
                     needReconnect = true;
