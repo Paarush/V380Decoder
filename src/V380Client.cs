@@ -624,7 +624,8 @@ namespace V380Decoder.src
         int ReadExact(NetworkStream s, byte[] buf, int off, int cnt, CancellationToken ct)
         {
             int tot = 0;
-            var deadline = DateTime.Now.AddSeconds(3);
+            var deadline = ct.IsCancellationRequested ? DateTime.Now.AddMilliseconds(100)
+                           : DateTime.Now.AddSeconds(3);
             while (tot < cnt)
             {
                 if (ct.IsCancellationRequested) return -1;

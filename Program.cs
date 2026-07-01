@@ -134,8 +134,8 @@ if (args.Length > 0)
          cts.Cancel();
      };
 
-    // Handle SIGTERM from systemd
-    PosixSignalRegistration.Create(PosixSignal.SIGTERM, ctx =>
+    // Handle SIGTERM from systemd — must keep reference alive to prevent GC
+    using var sigterm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, ctx =>
     {
         ctx.Cancel = true;
         cts.Cancel();
