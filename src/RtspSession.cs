@@ -196,13 +196,19 @@ namespace V380Decoder.src
             catch { alive = false; }
         }
 
-        // ── RTP video push  (H.264 Annex-B → RTP NAL/FU-A) ──────
+        // ── RTP video push  (H.264/H.265 Annex-B → RTP NAL/FU-A) ──────
         public void PushVideo(FrameData f)
         {
             if (!playing) return;
 
-            // RTP timestamp: 90000 Hz, camera timestamp in milliseconds
             uint rts = (uint)(f.Timestamp * 90);
+            bool h265 = server.IsH265;
+
+            if (h265)
+            {
+                PushVideoH265(f.Payload, rts);
+                return;
+            }
 
             RtspServer.ParseNals(f.Payload, (nalType, nal) =>
             {
@@ -233,6 +239,61 @@ namespace V380Decoder.src
                         frag[0] = fuInd;
                         frag[1] = fuHdr;
                         Array.Copy(nal, offset, frag, 2, chunk);
+
+                        SendRtp(videoCh, 96, videoSeq++, rts, videoSsrc,
+                                frag, 0, frag.Length, marker: last);
+                        offset += chunk;
+                        first = false;
+                    }
+                }
+            });
+        }
+
+        // ── H.265 RTP push ──────────────────────────────────────────────
+        void PushVideoH265(byte[] data, uint rts)
+        {
+            RtspServer.ParseNalsH265(data, (nalType, nal) =>
+            {
+                const int MTU = 1400;
+                // Non-VCL NAL types (32+): VPS, SPS, PPS, AUD, etc. — send as single units
+                if (nalType >= 32)
+                {
+                    if (nal.Length <= MTU)
+                    {
+                        SendRtp(videoCh, 96, videoSeq++, rts, videoSsrc, nal, 0, nal.Length, marker: false);
+                    }
+                    return;
+                }
+
+                if (nal.Length <= MTU)
+                {
+                    // Single NAL unit packet
+                    SendRtp(videoCh, 96, videoSeq++, rts, videoSsrc, nal, 0, nal.Length, marker: true);
+                }
+                else
+                {
+                    // H.265 FU (Fragmentation Unit) - type 49
+                    byte nalHdr0 = nal[0];
+                    byte nalHdr1 = nal.Length > 1 ? nal[1] : (byte)0;
+                    byte fuIndicator = (byte)((nalHdr0 & 0x81) | (49 << 1)); // type=49 FU
+                    int offset = 2; // 2-byte H.265 NAL header
+                    bool first = true;
+
+                    while (offset < nal.Length)
+                    {
+                        int chunk = Math.Min(MTU - 3, nal.Length - offset);
+                        bool last = offset + chunk >= nal.Length;
+
+                        // FU header byte
+                        byte fuHdr = (byte)(nalType & 0x3F);
+                        if (first) fuHdr |= 0x80; // S bit
+                        if (last) fuHdr |= 0x40;  // E bit
+
+                        var frag = new byte[3 + chunk];
+                        frag[0] = fuIndicator;
+                        frag[1] = nalHdr1; // keep second header byte
+                        frag[2] = fuHdr;
+                        Array.Copy(nal, offset, frag, 3, chunk);
 
                         SendRtp(videoCh, 96, videoSeq++, rts, videoSsrc,
                                 frag, 0, frag.Length, marker: last);
