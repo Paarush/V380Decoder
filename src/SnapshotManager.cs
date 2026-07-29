@@ -219,7 +219,7 @@ namespace V380Decoder.src
             {
                 FileName = "ffmpeg",
                 Arguments = "-hide_banner -loglevel error " +
-                            "-f h264 -i pipe:0 " +
+                            "-i pipe:0 " +
                             "-q:v 4 -f image2pipe -vcodec mjpeg pipe:1",
                 UseShellExecute = false,
                 RedirectStandardInput = true,
@@ -242,7 +242,7 @@ namespace V380Decoder.src
                 {
                     FileName = "ffmpeg",
                     Arguments = "-hide_banner -loglevel error " +
-                                "-f h264 -i pipe:0 " +
+                                "-i pipe:0 " +
                                 "-frames:v 1 -q:v 2 -f image2 pipe:1",
                     UseShellExecute = false,
                     RedirectStandardInput = true,

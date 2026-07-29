@@ -362,8 +362,8 @@ namespace V380Decoder.src
                     if (payloadBuf.Length < payLen) payloadBuf = new byte[payLen];
                     if (ReadExact(streamStream, payloadBuf, 0, payLen) < payLen) continue;
 
-                    // VIDEO  0x00=I-frame  0x01=P-frame
-                    if (type == 0x00 || type == 0x01)
+                    // VIDEO  0x00=I-frame  0x01=P-frame  0x28/0x29=alt-video (fw v32+)
+                    if (type == 0x00 || type == 0x01 || type == 0x28 || type == 0x29)
                     {
                         if (curFrame == 0) { videoFrags.Clear(); videoTotal = totalFrame; }
                         if (totalFrame != videoTotal) { videoFrags.Clear(); videoTotal = totalFrame; }
@@ -376,14 +376,18 @@ namespace V380Decoder.src
                         byte[] full = videoFrags.ToArray();
                         videoFrags.Clear();
 
+                        byte[] payload;
+                        bool isIFrame;
+
                         //parse inner 16-byte frame header
                         uint frameId = ReadUInt32LE(full, 0);
                         ushort frameType = ReadUInt16LE(full, 4);
                         ushort frameRate = ReadUInt16LE(full, 6);
                         ulong timestamp = ReadUInt64LE(full, 8);
 
-                        byte[] payload = new byte[full.Length - 16];
+                        payload = new byte[full.Length - 16];
                         Array.Copy(full, 16, payload, 0, payload.Length);
+                        isIFrame = type == 0x00 || type == 0x28;
 
                         if (needDecrypt)
                         {
@@ -393,7 +397,7 @@ namespace V380Decoder.src
                                 DecryptVideoFrame(payload, payload.Length);
                         }
 
-                        // Search for H.264 Annex-B start code within first 16 bytes
+                        // Search for H.264/H.265 Annex-B start code within first 16 bytes
                         int scPos = -1;
                         int searchEnd = Math.Min(16, payload.Length - 3);
                         for (int i = 0; i < searchEnd; i++)
