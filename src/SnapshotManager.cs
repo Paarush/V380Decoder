@@ -87,11 +87,15 @@ namespace V380Decoder.src
             {
                 try
                 {
-                    lock (_ffmpegLock)
+                    // Write asynchronously so we never block the camera receive loop
+                    Task.Run(() =>
                     {
-                        _ffmpegStdin?.Write(h264Frame, 0, h264Frame.Length);
-                        _ffmpegStdin?.Flush();
-                    }
+                        lock (_ffmpegLock)
+                        {
+                            _ffmpegStdin?.Write(h264Frame, 0, h264Frame.Length);
+                            _ffmpegStdin?.Flush();
+                        }
+                    });
                 }
                 catch (Exception ex) { LogUtils.debug($"[SNAP] FFmpeg write error: {ex.Message}"); }
             }

@@ -207,7 +207,8 @@ namespace V380Decoder.src
             streamClient = new TcpClient
             {
                 NoDelay = true,
-                ReceiveBufferSize = 0x8000
+                ReceiveBufferSize = 0x20000,
+                SendBufferSize = 0x10000
             };
             var r = streamClient.BeginConnect(ip, port, null, null);
             if (!r.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(5)))
@@ -628,7 +629,7 @@ namespace V380Decoder.src
         int ReadExact(NetworkStream s, byte[] buf, int off, int cnt)
         {
             int tot = 0;
-            var deadline = DateTime.Now.AddSeconds(3);
+            var deadline = DateTime.Now.AddSeconds(15);
             while (tot < cnt)
             {
                 if (DateTime.Now > deadline)

@@ -23,6 +23,11 @@ namespace V380Decoder.src
         private uint videoSsrc = (uint)new Random().Next();
         private uint audioSsrc = (uint)new Random().Next();
 
+        // Monotonically increasing synthetic RTP timestamps
+        private uint _videoRtsClock = 0;
+        private const uint RTP_VIDEO_TICK = 7500;  // ~12 fps at 90 kHz clock
+        private uint _audioRtsClock = 0;
+
         public event Action OnClose;
 
         public RtspSession(int id, TcpClient tcp, RtspServer server, bool secure = false)
@@ -201,15 +206,17 @@ namespace V380Decoder.src
         {
             if (!playing) return;
 
-            uint rts = (uint)(f.Timestamp * 90);
-            bool h265 = server.IsH265;
+            // Use synthetic monotonically increasing RTP timestamps
+            // Camera timestamps are unreliable and cause non-monotonic DTS errors
+            _videoRtsClock += RTP_VIDEO_TICK;
 
-            if (h265)
+            if (server.IsH265)
             {
-                PushVideoH265(f.Payload, rts);
+                PushVideoH265(f.Payload, _videoRtsClock);
                 return;
             }
 
+            uint rts = _videoRtsClock;
             RtspServer.ParseNals(f.Payload, (nalType, nal) =>
             {
                 const int MTU = 1400;
@@ -309,17 +316,15 @@ namespace V380Decoder.src
         {
             if (!playing) return;
 
-            // RTP timestamp: 8000 Hz, camera timestamp in milliseconds
-            uint rts = (uint)(f.Timestamp * 8);
-
-            // Send in 20 ms chunks = 160 samples at 8 kHz
+            // Use synthetic RTP timestamps to prevent DTS discontinuities
+            // 160 samples per chunk at 8 kHz = 20 ms of audio per RTP packet
             const int CHUNK = 160;
             for (int off = 0; off < f.Payload.Length; off += CHUNK)
             {
                 int len = Math.Min(CHUNK, f.Payload.Length - off);
-                SendRtp(audioCh, 8, audioSeq++, rts, audioSsrc,
+                SendRtp(audioCh, 8, audioSeq++, _audioRtsClock, audioSsrc,
                         f.Payload, off, len, marker: false);
-                rts += (uint)len; // advance timestamp by samples sent
+                _audioRtsClock += (uint)CHUNK;
             }
         }
 
